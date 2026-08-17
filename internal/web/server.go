@@ -10,6 +10,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/JoaoVictorVM/2048RL/internal/game"
 )
 
 const (
@@ -18,19 +20,25 @@ const (
 )
 
 type Config struct {
-	Port      int
-	DataDir   string
-	StaticDir string
-	Logger    *slog.Logger
+	Port       int
+	DataDir    string
+	StaticDir  string
+	SessionTTL time.Duration
+	NewGame    func() *game.Game
+	Logger     *slog.Logger
 }
 
 type Server struct {
-	dataDir string
-	logger  *slog.Logger
-	http    *http.Server
+	dataDir  string
+	logger   *slog.Logger
+	http     *http.Server
+	sessions *SessionStore
+	newGame  func() *game.Game
 
-	mu       sync.Mutex
-	listener net.Listener
+	mu        sync.Mutex
+	listener  net.Listener
+	stopSweep chan struct{}
+	sweepOnce sync.Once
 }
 
 func NewServer(cfg Config) *Server {
@@ -43,10 +51,16 @@ func NewServer(cfg Config) *Server {
 	if cfg.Logger == nil {
 		cfg.Logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 	}
+	if cfg.NewGame == nil {
+		cfg.NewGame = func() *game.Game { return game.NewGame() }
+	}
 
 	s := &Server{
-		dataDir: cfg.DataDir,
-		logger:  cfg.Logger,
+		dataDir:   cfg.DataDir,
+		logger:    cfg.Logger,
+		sessions:  NewSessionStore(cfg.SessionTTL),
+		newGame:   cfg.NewGame,
+		stopSweep: make(chan struct{}),
 	}
 	s.http = &http.Server{
 		Addr:              fmt.Sprintf(":%d", cfg.Port),
@@ -59,6 +73,9 @@ func NewServer(cfg Config) *Server {
 func (s *Server) routes(staticDir string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/runs", s.handleRuns)
+	mux.HandleFunc("POST /api/human/new", s.handleHumanNew)
+	mux.HandleFunc("POST /api/human/move", s.handleHumanMove)
+	mux.HandleFunc("GET /api/human/reference", s.handleHumanReference)
 	mux.Handle("/", staticHandler(staticDir, s.logger))
 	return mux
 }
@@ -101,13 +118,32 @@ func (s *Server) Start() error {
 
 	s.logger.Info("server listening", "addr", ln.Addr().String(), "data_dir", s.dataDir)
 
+	go s.sweepSessions()
+
 	if err := s.http.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 	return nil
 }
 
+func (s *Server) sweepSessions() {
+	ticker := time.NewTicker(sessionSweepInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.stopSweep:
+			return
+		case <-ticker.C:
+			if removed := s.sessions.Sweep(); removed > 0 {
+				s.logger.Info("expired human play sessions removed", "count", removed)
+			}
+		}
+	}
+}
+
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info("server shutting down")
+	s.sweepOnce.Do(func() { close(s.stopSweep) })
 	return s.http.Shutdown(ctx)
 }
