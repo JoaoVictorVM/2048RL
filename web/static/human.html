@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2048 — Jogue você mesmo</title>
+  <link rel="stylesheet" href="/css/board.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #faf8ef;
+      --ink: #776e65;
+      --panel: #bbada0;
+      --accent: #8f7a66;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 32px 16px 56px;
+      background: var(--page-bg);
+      color: var(--ink);
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    main {
+      width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2.6rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      opacity: 0.75;
+    }
+
+    .scores {
+      display: flex;
+      gap: 8px;
+    }
+
+    .score-box {
+      min-width: 84px;
+      padding: 8px 12px;
+      background: var(--panel);
+      border-radius: 6px;
+      color: #f9f6f2;
+      text-align: center;
+    }
+
+    .score-box span {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.85;
+    }
+
+    .score-box strong {
+      font-size: 1.5rem;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .hint {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    button {
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #f9f6f2;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(1.08); }
+
+    .board-wrapper { position: relative; }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 24px;
+      text-align: center;
+      background: rgba(238, 228, 218, 0.86);
+      border-radius: 10px;
+      z-index: 2;
+    }
+
+    .overlay h2 {
+      margin: 0;
+      font-size: 1.9rem;
+    }
+
+    .overlay p { margin: 0; }
+
+    .overlay .result { font-size: 1.05rem; }
+
+    .overlay .reference {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      max-width: 32ch;
+    }
+
+    #status {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: #f2b179;
+      color: #5c3b23;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>2048</h1>
+        <p class="subtitle">Use as setas do teclado e compare seu placar com o do agente.</p>
+      </div>
+      <div class="scores">
+        <div class="score-box">
+          <span>Score</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="score-box">
+          <span>Melhor</span>
+          <strong id="best">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <p class="hint">Junte os tiles até chegar a 2048.</p>
+      <button id="new-game" type="button">Novo jogo</button>
+    </div>
+
+    <div class="board-wrapper">
+      <div id="board"></div>
+      <div class="overlay" id="game-over" hidden>
+        <h2>Fim de jogo</h2>
+        <p class="result">Score <strong id="final-score">0</strong> · maior tile <strong id="final-max-tile">0</strong></p>
+        <p class="reference" id="reference" hidden></p>
+        <button id="new-game-overlay" type="button">Jogar de novo</button>
+      </div>
+    </div>
+
+    <p id="status" hidden></p>
+  </main>
+
+  <script type="module" src="/js/human.js"></script>
+</body>
+</html>
