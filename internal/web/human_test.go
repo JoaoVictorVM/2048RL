@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/JoaoVictorVM/2048RL/internal/game"
+	"github.com/JoaoVictorVM/2048RL/internal/metrics"
 )
 
 const humanTestSeed = 2026
@@ -324,10 +325,10 @@ func TestHumanMove_ReportsWonWhenTileReaches2048(t *testing.T) {
 	}
 }
 
-func writeMetricsRecords(t *testing.T, dataDir, runID string, records []metricsRecord, modTime time.Time) {
+func writeMetricsRecords(t *testing.T, dataDir, runID string, records []metrics.Record, modTime time.Time) {
 	t.Helper()
 
-	path := filepath.Join(dataDir, metricsDirName, runID, metricsFile)
+	path := metrics.RunFile(dataDir, runID)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
@@ -389,12 +390,12 @@ func TestHumanReference_ReturnsStatsFromMostRecentRun(t *testing.T) {
 	dataDir := t.TempDir()
 	now := time.Now()
 
-	writeMetricsRecords(t, dataDir, "run-antigo", []metricsRecord{
+	writeMetricsRecords(t, dataDir, "run-antigo", []metrics.Record{
 		{Episode: 1, Score: 100, MaxTile: 128},
 		{Episode: 2, Score: 300, MaxTile: 256},
 	}, now.Add(-2*time.Hour))
 
-	writeMetricsRecords(t, dataDir, "run-recente", []metricsRecord{
+	writeMetricsRecords(t, dataDir, "run-recente", []metrics.Record{
 		{Episode: 1, Score: 1000, MaxTile: 1024, Won: false, Moves: 400},
 		{Episode: 2, Score: 3000, MaxTile: 2048, Won: true, Moves: 900},
 		{Episode: 3, Score: 2000, MaxTile: 2048, Won: true, Moves: 700},
@@ -419,7 +420,7 @@ func TestHumanReference_ReturnsStatsFromMostRecentRun(t *testing.T) {
 
 func TestHumanReference_SkipsMalformedRecords(t *testing.T) {
 	dataDir := t.TempDir()
-	path := filepath.Join(dataDir, metricsDirName, "run-a", metricsFile)
+	path := metrics.RunFile(dataDir, "run-a")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}

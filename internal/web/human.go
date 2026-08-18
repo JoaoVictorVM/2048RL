@@ -1,18 +1,12 @@
 package web
 
 import (
-	"bufio"
 	"encoding/json"
-	"errors"
-	"io/fs"
 	"net/http"
-	"os"
-	"path/filepath"
-	"sort"
 	"strings"
-	"time"
 
 	"github.com/JoaoVictorVM/2048RL/internal/game"
+	"github.com/JoaoVictorVM/2048RL/internal/metrics"
 )
 
 const (
@@ -58,14 +52,6 @@ type referenceResponse struct {
 }
 
 type boardJSON [game.Size][game.Size]int
-
-type metricsRecord struct {
-	Episode int  `json:"episode"`
-	Score   int  `json:"score"`
-	MaxTile int  `json:"max_tile"`
-	Won     bool `json:"won"`
-	Moves   int  `json:"moves"`
-}
 
 func (s *Server) handleHumanNew(w http.ResponseWriter, r *http.Request) {
 	session, err := s.sessions.Create(s.newGame())
@@ -140,7 +126,7 @@ func (s *Server) handleHumanReference(w http.ResponseWriter, r *http.Request) {
 }
 
 func readReferenceStat(dataDir string) (referenceResponse, error) {
-	runID, path, err := mostRecentMetricsFile(dataDir)
+	runID, path, err := metrics.MostRecentRunFile(dataDir)
 	if err != nil {
 		return referenceResponse{}, err
 	}
@@ -148,7 +134,7 @@ func readReferenceStat(dataDir string) (referenceResponse, error) {
 		return referenceResponse{Available: false}, nil
 	}
 
-	records, err := readMetricsRecords(path)
+	records, err := metrics.ReadAll(path)
 	if err != nil {
 		return referenceResponse{}, err
 	}
@@ -169,60 +155,4 @@ func readReferenceStat(dataDir string) (referenceResponse, error) {
 		AvgScore:   float64(totalScore) / count,
 		AvgMaxTile: float64(totalMaxTile) / count,
 	}, nil
-}
-
-func mostRecentMetricsFile(dataDir string) (string, string, error) {
-	entries, err := os.ReadDir(filepath.Join(dataDir, metricsDirName))
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return "", "", nil
-		}
-		return "", "", err
-	}
-
-	sort.Slice(entries, func(i, j int) bool { return entries[i].Name() < entries[j].Name() })
-
-	var runID, path string
-	var newest time.Time
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		candidate := filepath.Join(dataDir, metricsDirName, entry.Name(), metricsFile)
-		info, err := os.Stat(candidate)
-		if err != nil || info.IsDir() {
-			continue
-		}
-		if path == "" || info.ModTime().After(newest) {
-			runID, path, newest = entry.Name(), candidate, info.ModTime()
-		}
-	}
-	return runID, path, nil
-}
-
-func readMetricsRecords(path string) ([]metricsRecord, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var records []metricsRecord
-	scanner := bufio.NewScanner(file)
-	scanner.Buffer(make([]byte, 0, 64*1024), 1<<20)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		var record metricsRecord
-		if err := json.Unmarshal([]byte(line), &record); err != nil {
-			continue
-		}
-		records = append(records, record)
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-	return records, nil
 }

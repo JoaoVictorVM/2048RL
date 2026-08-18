@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/JoaoVictorVM/2048RL/internal/metrics"
 )
 
 func writeFile(t *testing.T, path string, content string) {
@@ -18,12 +20,12 @@ func writeFile(t *testing.T, path string, content string) {
 
 func writeCheckpoint(t *testing.T, dataDir, runID, filename string) {
 	t.Helper()
-	writeFile(t, filepath.Join(dataDir, weightsDirName, runID, filename), "weights")
+	writeFile(t, filepath.Join(dataDir, WeightsDirName, runID, filename), "weights")
 }
 
 func writeMetrics(t *testing.T, dataDir, runID string) {
 	t.Helper()
-	writeFile(t, filepath.Join(dataDir, metricsDirName, runID, metricsFile), "{}\n")
+	writeFile(t, metrics.RunFile(dataDir, runID), "{}\n")
 }
 
 func findRun(t *testing.T, runs []Run, runID string) Run {
@@ -90,7 +92,7 @@ func TestEnsureDataDir_CreatesRunDirectoryTree(t *testing.T) {
 		t.Fatalf("EnsureDataDir: %v", err)
 	}
 
-	for _, sub := range []string{weightsDirName, metricsDirName} {
+	for _, sub := range []string{WeightsDirName, metrics.DirName} {
 		info, err := os.Stat(filepath.Join(dataDir, sub))
 		if err != nil || !info.IsDir() {
 			t.Errorf("expected %s/%s to exist: %v", dataDir, sub, err)
@@ -132,7 +134,7 @@ func TestScanRuns_IgnoresMalformedCheckpointFilenames(t *testing.T) {
 
 func TestScanRuns_RunWithoutCheckpointsIsStillListed(t *testing.T) {
 	dataDir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dataDir, weightsDirName, "run-empty"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dataDir, WeightsDirName, "run-empty"), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 

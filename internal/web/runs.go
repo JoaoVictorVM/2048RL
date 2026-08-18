@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -11,15 +12,19 @@ import (
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/JoaoVictorVM/2048RL/internal/metrics"
 )
 
 const (
-	weightsDirName = "weights"
-	metricsDirName = "metrics"
-	metricsFile    = "episodes.jsonl"
+	WeightsDirName = "weights"
 
 	errCodeDataDir = "RUNS001"
 )
+
+func CheckpointFilename(episode int) string {
+	return fmt.Sprintf("weights_ep%d.bin", episode)
+}
 
 var checkpointPattern = regexp.MustCompile(`^weights_ep(\d+)\.bin$`)
 
@@ -50,7 +55,7 @@ type errorResponse struct {
 }
 
 func EnsureDataDir(dataDir string) error {
-	for _, sub := range []string{weightsDirName, metricsDirName} {
+	for _, sub := range []string{WeightsDirName, metrics.DirName} {
 		if err := os.MkdirAll(filepath.Join(dataDir, sub), 0o755); err != nil {
 			return err
 		}
@@ -63,7 +68,7 @@ func ScanRuns(dataDir string) ([]Run, error) {
 		return nil, err
 	}
 
-	entries, err := os.ReadDir(filepath.Join(dataDir, weightsDirName))
+	entries, err := os.ReadDir(filepath.Join(dataDir, WeightsDirName))
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return []Run{}, nil
@@ -90,7 +95,7 @@ func ScanRuns(dataDir string) ([]Run, error) {
 func scanRun(dataDir, runID string) (Run, error) {
 	run := Run{RunID: runID, Checkpoints: []Checkpoint{}}
 
-	entries, err := os.ReadDir(filepath.Join(dataDir, weightsDirName, runID))
+	entries, err := os.ReadDir(filepath.Join(dataDir, WeightsDirName, runID))
 	if err != nil {
 		return Run{}, err
 	}
@@ -122,7 +127,7 @@ func scanRun(dataDir, runID string) (Run, error) {
 		return run.Checkpoints[i].Episode < run.Checkpoints[j].Episode
 	})
 
-	if info, err := os.Stat(filepath.Join(dataDir, metricsDirName, runID, metricsFile)); err == nil && !info.IsDir() {
+	if info, err := os.Stat(metrics.RunFile(dataDir, runID)); err == nil && !info.IsDir() {
 		modified := formatTime(info.ModTime())
 		run.HasMetrics = true
 		run.MetricsModifiedAt = &modified
