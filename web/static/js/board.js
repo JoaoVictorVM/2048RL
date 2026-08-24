@@ -42,7 +42,7 @@ export function maxTile(board) {
 
 // Renderiza o tabuleiro a partir do estado que o servidor devolve. O casamento
 // entre tiles antigos e novos existe só para animar o deslize: nenhuma regra do
-// jogo é decidida aqui — o estado é sempre o que veio de internal/game.
+// jogo é decidida aqui: o estado é sempre o que veio de internal/game.
 export class BoardRenderer {
   constructor(container) {
     this.container = container;
