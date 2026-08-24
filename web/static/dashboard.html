@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2048 — Métricas de treino</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #faf8ef;
+      --ink: #776e65;
+      --panel: #bbada0;
+      --card: #fff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 32px 16px 56px;
+      background: var(--page-bg);
+      color: var(--ink);
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    main {
+      width: 100%;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2.2rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      opacity: 0.75;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 260px;
+    }
+
+    .field label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.75;
+    }
+
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d6cdc4;
+      border-radius: 6px;
+      background: var(--card);
+      color: inherit;
+      font-size: 0.95rem;
+    }
+
+    select:disabled { opacity: 0.6; }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      min-height: 1.4em;
+      font-size: 0.88rem;
+      opacity: 0.85;
+    }
+
+    #live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #edc22e;
+      color: #6b5400;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+
+    #live[hidden] { display: none; }
+
+    .charts {
+      display: grid;
+      gap: 20px;
+    }
+
+    .card {
+      padding: 16px 18px 12px;
+      background: var(--card);
+      border: 1px solid #ece4dc;
+      border-radius: 10px;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      height: 220px;
+    }
+
+    #status {
+      margin-top: 20px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: #ede0c8;
+      font-size: 0.9rem;
+    }
+
+    #status[hidden] { display: none; }
+    #status[data-tone="warning"] { background: #f2b179; color: #5c3b23; }
+    #status[data-tone="error"] { background: #f67c5f; color: #fff5f0; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Métricas de treino</h1>
+        <p class="subtitle">Evolução do agente em janelas de 100 episódios.</p>
+      </div>
+      <div class="field">
+        <label for="run">Treino</label>
+        <select id="run" disabled></select>
+      </div>
+    </header>
+
+    <p class="meta">
+      <span id="live" hidden>treinando agora</span>
+      <span id="summary"></span>
+    </p>
+
+    <div class="charts">
+      <section class="card">
+        <h2>Win rate</h2>
+        <div class="canvas-wrapper"><canvas id="win-rate"></canvas></div>
+      </section>
+      <section class="card">
+        <h2>Score médio</h2>
+        <div class="canvas-wrapper"><canvas id="avg-score"></canvas></div>
+      </section>
+      <section class="card">
+        <h2>Maior tile médio</h2>
+        <div class="canvas-wrapper"><canvas id="avg-max-tile"></canvas></div>
+      </section>
+    </div>
+
+    <p id="status" hidden></p>
+  </main>
+
+  <script src="/js/vendor/chart.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
