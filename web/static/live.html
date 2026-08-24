@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2048 — Agente ao vivo</title>
+  <link rel="stylesheet" href="/css/board.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #faf8ef;
+      --ink: #776e65;
+      --panel: #bbada0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 32px 16px 56px;
+      background: var(--page-bg);
+      color: var(--ink);
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    main {
+      width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2.6rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      opacity: 0.75;
+    }
+
+    .scores {
+      display: flex;
+      gap: 8px;
+    }
+
+    .score-box {
+      min-width: 84px;
+      padding: 8px 12px;
+      background: var(--panel);
+      border-radius: 6px;
+      color: #f9f6f2;
+      text-align: center;
+    }
+
+    .score-box span {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.85;
+    }
+
+    .score-box strong { font-size: 1.5rem; }
+
+    .selectors {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .field {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.75;
+    }
+
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d6cdc4;
+      border-radius: 6px;
+      background: #fff;
+      color: inherit;
+      font-size: 0.95rem;
+    }
+
+    select:disabled { opacity: 0.6; }
+
+    .episode {
+      margin: 0 0 12px;
+      font-size: 0.85rem;
+      opacity: 0.8;
+      min-height: 1.2em;
+    }
+
+    #status {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: #ede0c8;
+      font-size: 0.9rem;
+    }
+
+    #status[hidden] { display: none; }
+    #status[data-tone="warning"] { background: #f2b179; color: #5c3b23; }
+    #status[data-tone="error"] { background: #f67c5f; color: #fff5f0; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>2048</h1>
+        <p class="subtitle">Assista a um agente treinado jogando ao vivo.</p>
+      </div>
+      <div class="scores">
+        <div class="score-box">
+          <span>Score</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="score-box">
+          <span>Jogadas</span>
+          <strong id="moves">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <div class="selectors">
+      <div class="field">
+        <label for="run">Treino</label>
+        <select id="run" disabled></select>
+      </div>
+      <div class="field">
+        <label for="checkpoint">Checkpoint</label>
+        <select id="checkpoint" disabled></select>
+      </div>
+    </div>
+
+    <p class="episode" id="episode"></p>
+
+    <div id="board"></div>
+
+    <p id="status" hidden></p>
+  </main>
+
+  <script type="module" src="/js/live.js"></script>
+</body>
+</html>
