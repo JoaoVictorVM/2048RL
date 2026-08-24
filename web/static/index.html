@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2048 RL Agent</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #faf8ef;
+      --ink: #776e65;
+      --panel: #bbada0;
+      --accent: #8f7a66;
+      --card: #fff;
+      --border: #ece4dc;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 48px 16px 64px;
+      background: var(--page-bg);
+      color: var(--ink);
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    main {
+      width: 100%;
+      max-width: 840px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3px;
+      width: 56px;
+      height: 56px;
+      padding: 4px;
+      background: var(--panel);
+      border-radius: 8px;
+      flex: none;
+    }
+
+    .logo span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      background: #eee4da;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .logo span:nth-child(2) { background: #f2b179; color: #f9f6f2; }
+    .logo span:nth-child(3) { background: #edcf72; color: #f9f6f2; }
+    .logo span:nth-child(4) { background: #edc22e; color: #f9f6f2; font-size: 0.5rem; }
+
+    h1 {
+      margin: 0;
+      font-size: 2.4rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      max-width: 60ch;
+      font-size: 1rem;
+      line-height: 1.5;
+      opacity: 0.8;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: #ede0c8;
+      font-size: 0.85rem;
+    }
+
+    .status[data-tone="warning"] { background: #f2b179; color: #5c3b23; }
+    .status[data-tone="error"] { background: #f67c5f; color: #fff5f0; }
+    .status[hidden] { display: none; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin: 28px 0 36px;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 22px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: inherit;
+      text-decoration: none;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(119, 110, 101, 0.14);
+    }
+
+    .card-tag {
+      align-self: flex-start;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--page-bg);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      opacity: 0.8;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      opacity: 0.8;
+    }
+
+    .card-cta {
+      margin-top: auto;
+      padding-top: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .howto {
+      padding: 22px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .howto h2 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+    }
+
+    .howto p {
+      margin: 0 0 14px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .howto ol {
+      margin: 0;
+      padding-left: 20px;
+      display: grid;
+      gap: 12px;
+      font-size: 0.9rem;
+    }
+
+    code {
+      display: inline-block;
+      margin-top: 5px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: var(--page-bg);
+      border: 1px solid var(--border);
+      font-family: Consolas, "SF Mono", Menlo, monospace;
+      font-size: 0.84rem;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <span>2</span><span>4</span><span>8</span><span>2048</span>
+        </div>
+        <div>
+          <h1>2048 RL Agent</h1>
+          <p class="subtitle">
+            Um agente que aprendeu 2048 sozinho, por self-play, com uma rede n-tupla treinada
+            por TD-learning. Motor de jogo e algoritmo escritos do zero em Go.
+          </p>
+        </div>
+      </div>
+      <p class="status" id="status" hidden></p>
+    </header>
+
+    <div class="cards">
+      <a class="card" href="/live.html">
+        <span class="card-tag">Assistir</span>
+        <h2>Agente ao vivo</h2>
+        <p>Escolha um treino e um checkpoint e acompanhe o agente jogando uma partida inteira, jogada a jogada.</p>
+        <span class="card-cta">Ver o agente jogar →</span>
+      </a>
+
+      <a class="card" href="/dashboard.html">
+        <span class="card-tag">Analisar</span>
+        <h2>Métricas de treino</h2>
+        <p>Win rate, score médio e maior tile médio em janelas de 100 episódios, com atualização ao vivo durante o treino.</p>
+        <span class="card-cta">Abrir o dashboard →</span>
+      </a>
+
+      <a class="card" href="/human.html">
+        <span class="card-tag">Jogar</span>
+        <h2>Jogue você mesmo</h2>
+        <p>Jogue com as setas do teclado, pelo mesmo motor que o agente usa, e compare seu placar com o dele.</p>
+        <span class="card-cta">Começar uma partida →</span>
+      </a>
+    </div>
+
+    <section class="howto">
+      <h2>Rodando localmente</h2>
+      <p>O modo de jogo humano funciona de imediato. Assistir ao agente e ver métricas exige pelo menos um treino gravado em disco.</p>
+      <ol>
+        <li>
+          Treine um agente (gera checkpoints e métricas em <code>./data</code>):
+          <code>go run ./cmd/train --episodes=1000</code>
+        </li>
+        <li>
+          Suba o servidor e abra esta página:
+          <code>go run ./cmd/server</code>
+        </li>
+      </ol>
+    </section>
+  </main>
+
+  <script>
+    const status = document.getElementById('status');
+
+    function showStatus(message, tone = 'info') {
+      status.textContent = message;
+      status.dataset.tone = tone;
+      status.hidden = !message;
+    }
+
+    async function loadStatus() {
+      try {
+        const response = await fetch('/api/runs');
+        if (!response.ok) {
+          throw new Error(`falha ao consultar os treinos (${response.status})`);
+        }
+
+        const runs = (await response.json()).runs ?? [];
+        const checkpoints = runs.reduce((total, run) => total + run.checkpoints.length, 0);
+
+        if (checkpoints === 0) {
+          showStatus('Nenhum treino gravado ainda. Rode go run ./cmd/train para liberar a visualização ao vivo e o dashboard.', 'warning');
+          return;
+        }
+
+        const withMetrics = runs.filter((run) => run.has_metrics).length;
+        showStatus(
+          `${runs.length} ${runs.length === 1 ? 'treino' : 'treinos'} em disco · ` +
+          `${checkpoints} ${checkpoints === 1 ? 'checkpoint' : 'checkpoints'} · ` +
+          `${withMetrics} com métricas`,
+        );
+      } catch (error) {
+        showStatus(error.message, 'error');
+      }
+    }
+
+    loadStatus();
+  </script>
+</body>
+</html>
