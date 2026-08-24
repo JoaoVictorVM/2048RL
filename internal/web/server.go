@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/JoaoVictorVM/2048RL/internal/agent"
 	"github.com/JoaoVictorVM/2048RL/internal/game"
 )
 
@@ -25,7 +26,10 @@ type Config struct {
 	StaticDir  string
 	SessionTTL time.Duration
 	NewGame    func() *game.Game
-	Logger     *slog.Logger
+	// AgentConfig define a configuração de tuplas usada para carregar
+	// checkpoints; o valor zero usa agent.DefaultConfig.
+	AgentConfig agent.Config
+	Logger      *slog.Logger
 }
 
 type Server struct {
@@ -34,6 +38,8 @@ type Server struct {
 	http     *http.Server
 	sessions *SessionStore
 	newGame  func() *game.Game
+	agentCfg agent.Config
+	live     livePacing
 
 	mu        sync.Mutex
 	listener  net.Listener
@@ -54,12 +60,17 @@ func NewServer(cfg Config) *Server {
 	if cfg.NewGame == nil {
 		cfg.NewGame = func() *game.Game { return game.NewGame() }
 	}
+	if len(cfg.AgentConfig.Tuples) == 0 {
+		cfg.AgentConfig = agent.DefaultConfig()
+	}
 
 	s := &Server{
 		dataDir:   cfg.DataDir,
 		logger:    cfg.Logger,
 		sessions:  NewSessionStore(cfg.SessionTTL),
 		newGame:   cfg.NewGame,
+		agentCfg:  cfg.AgentConfig,
+		live:      livePacing{moveDelay: DefaultMoveDelay, restartDelay: DefaultEpisodeRestartDelay},
 		stopSweep: make(chan struct{}),
 	}
 	s.http = &http.Server{
@@ -76,6 +87,7 @@ func (s *Server) routes(staticDir string) http.Handler {
 	mux.HandleFunc("POST /api/human/new", s.handleHumanNew)
 	mux.HandleFunc("POST /api/human/move", s.handleHumanMove)
 	mux.HandleFunc("GET /api/human/reference", s.handleHumanReference)
+	mux.HandleFunc("GET /ws/live", s.handleLiveWS)
 	mux.Handle("/", staticHandler(staticDir, s.logger))
 	return mux
 }
