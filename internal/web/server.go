@@ -84,6 +84,7 @@ func NewServer(cfg Config) *Server {
 func (s *Server) routes(staticDir string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/runs", s.handleRuns)
+	mux.HandleFunc("GET /api/runs/{run_id}/metrics", s.handleRunMetrics)
 	mux.HandleFunc("POST /api/human/new", s.handleHumanNew)
 	mux.HandleFunc("POST /api/human/move", s.handleHumanMove)
 	mux.HandleFunc("GET /api/human/reference", s.handleHumanReference)
