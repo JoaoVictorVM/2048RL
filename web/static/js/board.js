@@ -92,6 +92,8 @@ export class BoardRenderer {
 
     const survivors = emptyGrid();
     const pending = [];
+    const consumed = new Set();
+    const previousTiles = this.tileAt.flat().filter((tile) => tile !== null);
 
     for (const line of LINE_SCANS[direction]()) {
       const previous = line
@@ -109,14 +111,17 @@ export class BoardRenderer {
         if (first && first.value === target.value) {
           this.#moveTile(first, target.row, target.col);
           survivors[target.row][target.col] = first;
+          consumed.add(first);
           i += 1;
         } else if (first && second && first.value === second.value && first.value * 2 === target.value) {
           this.#moveTile(first, target.row, target.col);
           this.#moveTile(second, target.row, target.col);
-          pending.push({ ...target, sources: [first, second], className: 'tile-merged' });
+          consumed.add(first);
+          consumed.add(second);
+          pending.push({ ...target, className: 'tile-merged' });
           i += 2;
         } else {
-          pending.push({ ...target, sources: [], className: 'tile-new' });
+          pending.push({ ...target, className: 'tile-new' });
         }
       }
     }
@@ -125,10 +130,12 @@ export class BoardRenderer {
     this.tileAt = survivors;
 
     window.setTimeout(() => {
-      for (const item of pending) {
-        for (const source of item.sources) {
-          source.el.remove();
+      for (const tile of previousTiles) {
+        if (!consumed.has(tile)) {
+          tile.el.remove();
         }
+      }
+      for (const item of pending) {
         this.tileAt[item.row][item.col] = this.#createTile(item.value, item.row, item.col, item.className);
       }
     }, SLIDE_MS);
