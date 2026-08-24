@@ -13,41 +13,11 @@ import (
 	"github.com/JoaoVictorVM/2048RL/internal/metrics"
 )
 
-type Summary struct {
-	Episodes   int
-	AvgScore   float64
-	AvgMaxTile float64
-	WinRate    float64
-}
-
 type Result struct {
 	RunID     string
 	Episodes  int
 	Completed bool
-	Overall   Summary
-}
-
-func Summarize(records []metrics.Record) Summary {
-	if len(records) == 0 {
-		return Summary{}
-	}
-
-	totalScore, totalMaxTile, wins := 0, 0, 0
-	for _, record := range records {
-		totalScore += record.Score
-		totalMaxTile += record.MaxTile
-		if record.Won {
-			wins++
-		}
-	}
-
-	count := float64(len(records))
-	return Summary{
-		Episodes:   len(records),
-		AvgScore:   float64(totalScore) / count,
-		AvgMaxTile: float64(totalMaxTile) / count,
-		WinRate:    float64(wins) / count,
-	}
+	Overall   metrics.Summary
 }
 
 func Run(ctx context.Context, cfg Config, network *agent.Network, logger *slog.Logger) (Result, error) {
@@ -109,7 +79,7 @@ func Run(ctx context.Context, cfg Config, network *agent.Network, logger *slog.L
 		}
 
 		if episode%cfg.LogInterval == 0 {
-			summary := Summarize(window)
+			summary := metrics.Summarize(window)
 			logger.Info("progress",
 				"run_id", runID,
 				"episode", episode,
@@ -129,7 +99,7 @@ func Run(ctx context.Context, cfg Config, network *agent.Network, logger *slog.L
 	}
 
 	result.Completed = result.Episodes == cfg.Episodes
-	result.Overall = Summarize(all)
+	result.Overall = metrics.Summarize(all)
 
 	logger.Info("training finished",
 		"run_id", runID,
